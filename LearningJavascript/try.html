@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Untitled Document</title>
+<script src="js/jquery-3.2.1.min.js"></script>
+
+</head>
+
+<body>
+<select id="option">
+	<option>append</option>
+	<option>prepend</option>
+	<option>append to</option>
+	<option>prepend to</option>
+</select>
+<button id="submit" onClick="modifyElement()">Submit</button>
+<div class="write">append?</div>
+<div class="write">prepend?</div>
+<div class="write">Append to?</div>
+<div class="write">Preppend to?</div>
+<script>
+	function modifyElement(){
+		var d=$("#option").val();
+		switch(d){
+			case 'append':$('.write').append('<p>This is append to</p>');
+			break;
+			case 'prepend': $('.write').prepend('<p>This is prepend to</p>');
+			break;
+			case 'append to': $('<p>This is append to</p> ').appendTo('.write');
+			break;
+			case 'prepend to': $('<p>This is prepend to</p>').prependTo('.write');
+			break;
+			default: $('<p>Not working</p>').prependTo('.write');
+		}
+	}
+</script>
+</body>
+</html>

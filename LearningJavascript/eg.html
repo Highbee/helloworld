@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Untitled Document</title>
+
+
+</head>
+
+<body>
+<h1>Determining browser type and version</h1>
+<input type="button" onclick="display()" value="Click Here">
+<div ID="targetDiv"></div>
+<script language="javascript">
+var begin, end
+function display()
+{
+if(navigator.appName == "Netscape") {
+if(navigator.userAgent.indexOf("Firefox") > 0) {
+begin = navigator.userAgent.indexOf("Firefox") +
+"Firefox".length + 1;
+end = navigator.userAgent.length;
+document.getElementById("targetDiv").innerHTML =
+"You are using Firefox " +
+navigator.userAgent.substring(begin, end);
+}
+}
+if(navigator.appName == "Microsoft Internet Explorer") {
+begin = navigator.userAgent.indexOf("MSIE ") +
+"MSIE ".length;
+if(navigator.userAgent.indexOf(";", begin) > 0) {
+end = navigator.userAgent.indexOf(";", begin);
+} else {
+end = navigator.userAgent.indexOf(")", begin)
++ 2;
+}
+document.getElementById("targetDiv").innerHTML =
+"You are using Internet Explorer " +
+navigator.userAgent.substring(begin, end);
+}
+}
+</script>
+</body>
+</html>
