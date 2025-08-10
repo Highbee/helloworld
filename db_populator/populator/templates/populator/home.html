@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Populator</title>
+</head>
+<body>
+    <h1>Database Populator</h1>
+    <p>Select a table to view and add data:</p>
+    <ul>
+        <li><a href="{% url 'employee_list' %}">Employees</a></li>
+        <li><a href="{% url 'product_list' %}">Products</a></li>
+        <li><a href="{% url 'status_list' %}">Statuses</a></li>
+        <li><a href="{% url 'productions_list' %}">Productions</a></li>
+        <li><a href="{% url 'bleaching_process_list' %}">Bleaching Process</a></li>
+        <li><a href="{% url 'transfers_list' %}">Transfers</a></li>
+    </ul>
+</body>
+</html>

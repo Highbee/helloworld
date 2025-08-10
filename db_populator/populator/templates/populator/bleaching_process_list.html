@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bleaching Processes</title>
+</head>
+<body>
+    <h1>Bleaching Processes</h1>
+    <ul>
+        {% for process in bleaching_processes %}
+            <li>{{ process.batch_number }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'bleaching_process_add' %}">Add Bleaching Process</a>
+</body>
+</html>

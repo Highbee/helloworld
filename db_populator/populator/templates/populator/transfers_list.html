@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transfers</title>
+</head>
+<body>
+    <h1>Transfers</h1>
+    <ul>
+        {% for transfer in transfers %}
+            <li>{{ transfer.transfer_id }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'transfers_add' %}">Add Transfer</a>
+</body>
+</html>

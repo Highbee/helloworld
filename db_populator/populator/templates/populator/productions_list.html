@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Productions</title>
+</head>
+<body>
+    <h1>Productions</h1>
+    <ul>
+        {% for production in productions %}
+            <li>{{ production.batch_number }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'productions_add' %}">Add Production</a>
+</body>
+</html>
