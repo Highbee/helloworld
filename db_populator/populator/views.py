@@ -1,5 +1,8 @@
 from django.shortcuts import render, redirect
-from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers
+from django.db.models import Sum
+from django.http import JsonResponse
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
+from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers, TransferItems
 from .forms import EmployeeForm, ProductForm, StatusForm, ProductionsForm, BleachingProcessForm, TransfersForm
 
 def employee_list(request):
@@ -88,3 +91,71 @@ def transfers_add(request):
     else:
         form = TransfersForm()
     return render(request, 'populator/transfers_form.html', {'form': form})
+
+def production_vs_transfers_checker(request):
+    # Get total production per product per day
+    production_by_day = Productions.objects.values('date', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('date', 'product__product_name')
+
+    # Get total transfers per product per day
+    transfers_by_day = TransferItems.objects.values('transfer__date', 'product__product_name').annotate(total_transferred=Sum('quantity_transferred')).order_by('transfer__date', 'product__product_name')
+
+    # Create a dictionary for easier lookup
+    production_dict = {}
+    for p in production_by_day:
+        key = (p['date'], p['product__product_name'])
+        production_dict[key] = p['total_produced']
+
+    transfers_dict = {}
+    for t in transfers_by_day:
+        key = (t['transfer__date'], t['product__product_name'])
+        transfers_dict[key] = t['total_transferred']
+
+    # Find discrepancies
+    discrepancies = []
+    all_keys = sorted(list(set(production_dict.keys()) | set(transfers_dict.keys())))
+
+    for key in all_keys:
+        date, product_name = key
+        produced = production_dict.get(key, 0)
+        transferred = transfers_dict.get(key, 0)
+        if produced != transferred:
+            discrepancies.append({
+                'date': date,
+                'product_name': product_name,
+                'produced': produced,
+                'transferred': transferred,
+                'difference': produced - transferred,
+            })
+
+    context = {
+        'discrepancies': discrepancies,
+    }
+    return render(request, 'populator/production_vs_transfers_checker.html', context)
+
+def api_daily_production(request):
+    production_by_day = Productions.objects.annotate(day=TruncDay('date')).values('day', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('day')
+
+    # Convert date objects to strings for JSON serialization
+    for item in production_by_day:
+        item['day'] = item['day'].strftime('%Y-%m-%d')
+
+    return JsonResponse(list(production_by_day), safe=False)
+
+def api_weekly_production(request):
+    production_by_week = Productions.objects.annotate(week=TruncWeek('date')).values('week', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('week')
+
+    for item in production_by_week:
+        item['week'] = item['week'].strftime('%Y-%m-%d')
+
+    return JsonResponse(list(production_by_week), safe=False)
+
+def api_monthly_production(request):
+    production_by_month = Productions.objects.annotate(month=TruncMonth('date')).values('month', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('month')
+
+    for item in production_by_month:
+        item['month'] = item['month'].strftime('%Y-%m')
+
+    return JsonResponse(list(production_by_month), safe=False)
+
+def infographics_dashboard(request):
+    return render(request, 'populator/infographics_dashboard.html')

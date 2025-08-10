@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Production vs. Transfers Checker</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .positive {
+            color: green;
+        }
+        .negative {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Production vs. Transfers Checker</h1>
+    <p>This page shows the days where the total production of a product does not match the total transfer to the store.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Product Name</th>
+                <th>Total Produced</th>
+                <th>Total Transferred</th>
+                <th>Difference (Produced - Transferred)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in discrepancies %}
+                <tr>
+                    <td>{{ item.date }}</td>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.produced }}</td>
+                    <td>{{ item.transferred }}</td>
+                    <td class="{% if item.difference > 0 %}positive{% else %}negative{% endif %}">{{ item.difference }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No discrepancies found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
