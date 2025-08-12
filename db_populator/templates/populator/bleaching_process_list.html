@@ -1,0 +1,38 @@
+{% extends 'populator/base.html' %}
+
+{% block title %}Bleaching Processes{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Bleaching Processes</h1>
+        <a href="{% url 'bleaching_process_add' %}" class="btn btn-primary">Add Bleaching Process</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Production Chemist</th>
+                <th>Batch Number</th>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Comments</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for process in bleaching_processes %}
+                <tr>
+                    <td>{{ process.idbleaching_process }}</td>
+                    <td>{{ process.production_chemist_employee.first_name }} {{ process.production_chemist_employee.last_name }}</td>
+                    <td>{{ process.batch_number }}</td>
+                    <td>{{ process.date }}</td>
+                    <td>{{ process.shift }}</td>
+                    <td>{{ process.comments }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6">No bleaching processes found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

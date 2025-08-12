@@ -1,0 +1,42 @@
+{% extends 'populator/base.html' %}
+
+{% block title %}Productions{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Productions</h1>
+        <a href="{% url 'productions_add' %}" class="btn btn-primary">Add Production</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Supervisor</th>
+                <th>Date</th>
+                <th>Batch Number</th>
+                <th>Shift</th>
+                <th>Line</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for production in productions %}
+                <tr>
+                    <td>{{ production.production_id }}</td>
+                    <td>{{ production.product.product_name }}</td>
+                    <td>{{ production.supervisor_employee.first_name }} {{ production.supervisor_employee.last_name }}</td>
+                    <td>{{ production.date }}</td>
+                    <td>{{ production.batch_number }}</td>
+                    <td>{{ production.shift }}</td>
+                    <td>{{ production.production_line }}</td>
+                    <td>{{ production.quantity_produced }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8">No productions found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

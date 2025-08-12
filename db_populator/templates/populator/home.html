@@ -1,0 +1,33 @@
+{% extends 'populator/base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <div class="px-4 py-5 my-5 text-center">
+        <h1 class="display-5 fw-bold">Database Populator</h1>
+        <div class="col-lg-6 mx-auto">
+            <p class="lead mb-4">Select a table to view and add data, or view the analytics dashboards.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Data Entry</h2>
+            <div class="list-group">
+                <a href="{% url 'employee_list' %}" class="list-group-item list-group-item-action">Employees</a>
+                <a href="{% url 'product_list' %}" class="list-group-item list-group-item-action">Products</a>
+                <a href="{% url 'status_list' %}" class="list-group-item list-group-item-action">Statuses</a>
+                <a href="{% url 'productions_list' %}" class="list-group-item list-group-item-action">Productions</a>
+                <a href="{% url 'bleaching_process_list' %}" class="list-group-item list-group-item-action">Bleaching Process</a>
+                <a href="{% url 'transfers_list' %}" class="list-group-item list-group-item-action">Transfers</a>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h2>Analytics</h2>
+            <div class="list-group">
+                <a href="{% url 'production_vs_transfers_checker' %}" class="list-group-item list-group-item-action">Production vs. Transfers Checker</a>
+                <a href="{% url 'infographics_dashboard' %}" class="list-group-item list-group-item-action">Infographics Dashboard</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
