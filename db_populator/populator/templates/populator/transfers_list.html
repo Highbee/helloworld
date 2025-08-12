@@ -1,15 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Transfers</title>
-</head>
-<body>
-    <h1>Transfers</h1>
-    <ul>
-        {% for transfer in transfers %}
-            <li>{{ transfer.transfer_id }}</li>
-        {% endfor %}
-    </ul>
-    <a href="{% url 'transfers_add' %}">Add Transfer</a>
-</body>
-</html>
+{% extends 'populator/base.html' %}
+
+{% block title %}Transfers{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Transfers</h1>
+        <a href="{% url 'transfers_add' %}" class="btn btn-primary">Add Transfer</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Supervisor</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Line</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transfer in transfers %}
+                <tr>
+                    <td>{{ transfer.transfer_id }}</td>
+                    <td>{{ transfer.supervisor_employee.first_name }} {{ transfer.supervisor_employee.last_name }}</td>
+                    <td>{{ transfer.date }}</td>
+                    <td>{{ transfer.transfer_time }}</td>
+                    <td>{{ transfer.production_line }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No transfers found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

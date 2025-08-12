@@ -1,20 +1,41 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Infographics Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
+{% extends 'populator/base.html' %}
+
+{% block title %}Infographics Dashboard{% endblock %}
+
+{% block content %}
     <h1>Infographics Dashboard</h1>
-
-    <h2>Daily Production</h2>
-    <canvas id="dailyProductionChart" width="400" height="200"></canvas>
-
-    <h2>Weekly Production</h2>
-    <canvas id="weeklyProductionChart" width="400" height="200"></canvas>
-
-    <h2>Monthly Production</h2>
-    <canvas id="monthlyProductionChart" width="400" height="200"></canvas>
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    Daily Production
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyProductionChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    Weekly Production
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklyProductionChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    Monthly Production
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyProductionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Helper function to generate random colors for the charts
@@ -116,5 +137,4 @@
                 });
             });
     </script>
-</body>
-</html>
+{% endblock %}

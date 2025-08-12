@@ -1,15 +1,34 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Products</title>
-</head>
-<body>
-    <h1>Products</h1>
-    <ul>
-        {% for product in products %}
-            <li>{{ product.product_name }}</li>
-        {% endfor %}
-    </ul>
-    <a href="{% url 'product_add' %}">Add Product</a>
-</body>
-</html>
+{% extends 'populator/base.html' %}
+
+{% block title %}Products{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Products</h1>
+        <a href="{% url 'product_add' %}" class="btn btn-primary">Add Product</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Packaging Units</th>
+                <th>Units Per Pack</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>{{ product.product_id }}</td>
+                    <td>{{ product.product_name }}</td>
+                    <td>{{ product.packaging_units }}</td>
+                    <td>{{ product.number_of_units_per_pack }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">No products found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

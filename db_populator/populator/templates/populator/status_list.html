@@ -1,15 +1,30 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Statuses</title>
-</head>
-<body>
-    <h1>Statuses</h1>
-    <ul>
-        {% for status in statuses %}
-            <li>{{ status.status_name }}</li>
-        {% endfor %}
-    </ul>
-    <a href="{% url 'status_add' %}">Add Status</a>
-</body>
-</html>
+{% extends 'populator/base.html' %}
+
+{% block title %}Statuses{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Statuses</h1>
+        <a href="{% url 'status_add' %}" class="btn btn-primary">Add Status</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for status in statuses %}
+                <tr>
+                    <td>{{ status.status_id }}</td>
+                    <td>{{ status.status_name }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="2">No statuses found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
