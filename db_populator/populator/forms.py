@@ -25,6 +25,9 @@ class BleachingProcessForm(forms.ModelForm):
     class Meta:
         model = BleachingProcess
         fields = '__all__'
+        widgets = {
+            'processors': forms.CheckboxSelectMultiple,
+        }
 
 class TransfersForm(forms.ModelForm):
     class Meta:
