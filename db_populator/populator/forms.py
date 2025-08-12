@@ -1,6 +1,6 @@
 from django import forms
 from datetime import date, datetime
-from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers, FactoryUnit
+from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers, FactoryUnit, TransferItems
 
 class EmployeeForm(forms.ModelForm):
     class Meta:
