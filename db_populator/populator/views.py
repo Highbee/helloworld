@@ -3,7 +3,7 @@ from django.db.models import Sum
 from django.http import JsonResponse
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers, TransferItems
-from .forms import EmployeeForm, ProductForm, StatusForm, ProductionsForm, BleachingProcessForm, TransfersForm, ProductionFormSet, TransferItemsFormSet
+from .forms import EmployeeForm, ProductForm, StatusForm, ProductionsForm, BleachingProcessForm, TransfersForm, ProductionFormSet, TransferItemsFormSet, BatchReportForm, DateRangeReportForm
 
 def employee_list(request):
     employees = Employees.objects.all()
@@ -164,12 +164,10 @@ def productions_formset_view(request):
     if request.method == 'POST':
         formset = ProductionFormSet(request.POST)
         if formset.is_valid():
-            for form in formset:
-                if form.has_changed(): # This ignores empty forms
-                    form.save()
-            return redirect('productions_list') # Or a new success page
+            formset.save()
+            return redirect('productions_list')
     else:
-        formset = ProductionFormSet(queryset=Productions.objects.none()) # Start with an empty formset
+        formset = ProductionFormSet(queryset=Productions.objects.none())
 
     return render(request, 'productions_formset.html', {'formset': formset})
 
@@ -187,3 +185,111 @@ def transfers_inline_formset_view(request):
         formset = TransferItemsFormSet(queryset=TransferItems.objects.none())
 
     return render(request, 'transfers_inline_formset.html', {'form': form, 'formset': formset})
+
+def reports_index(request):
+    batch_form = BatchReportForm()
+    date_range_form = DateRangeReportForm()
+    context = {
+        'batch_form': batch_form,
+        'date_range_form': date_range_form,
+    }
+    return render(request, 'reports_index.html', context)
+
+def report_batch_production(request):
+    batch_number = request.GET.get('batch_number')
+    report_data = []
+    if batch_number:
+        report_data = Productions.objects.filter(batch_number=batch_number)\
+            .values('product__product_name', 'batch_number')\
+            .annotate(total_produced=Sum('quantity_produced'))\
+            .order_by('product__product_name')
+
+    context = {
+        'report_data': report_data,
+        'batch_number': batch_number,
+    }
+    return render(request, 'report_batch_production.html', context)
+
+def report_daily_transfer_details(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    report_data = []
+    if start_date and end_date:
+        report_data = TransferItems.objects.filter(transfer__date__range=[start_date, end_date])\
+            .select_related('transfer__supervisor_employee', 'product')\
+            .order_by('transfer__date', 'product__product_name')
+
+    context = {
+        'report_data': report_data,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+    return render(request, 'report_daily_transfer_details.html', context)
+
+def report_supervisor_transfer_summary(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    report_data = []
+    if start_date and end_date:
+        report_data = TransferItems.objects.filter(transfer__date__range=[start_date, end_date])\
+            .values('transfer__date', 'product__product_name', 'transfer__supervisor_employee__last_name')\
+            .annotate(total_transferred=Sum('quantity_transferred'))\
+            .order_by('transfer__date', 'transfer__supervisor_employee__last_name', 'product__product_name')
+
+    context = {
+        'report_data': report_data,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+    return render(request, 'report_supervisor_transfer_summary.html', context)
+
+def report_daily_transfer_summary(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    report_data = []
+    if start_date and end_date:
+        report_data = TransferItems.objects.filter(transfer__date__range=[start_date, end_date])\
+            .values('transfer__date', 'product__product_name')\
+            .annotate(total_transferred=Sum('quantity_transferred'))\
+            .order_by('transfer__date', 'product__product_name')
+
+    context = {
+        'report_data': report_data,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+    return render(request, 'report_daily_transfer_summary.html', context)
+
+def report_total_production(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    report_data = []
+    if start_date and end_date:
+        report_data = Productions.objects.filter(date__range=[start_date, end_date])\
+            .values('product__product_name')\
+            .annotate(total_produced=Sum('quantity_produced'))\
+            .order_by('product__product_name')
+
+    context = {
+        'report_data': report_data,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+    return render(request, 'report_total_production.html', context)
+
+def report_total_transfer_summary(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    report_data = []
+    if start_date and end_date:
+        report_data = TransferItems.objects.filter(transfer__date__range=[start_date, end_date])\
+            .values('product__product_name')\
+            .annotate(total_transferred=Sum('quantity_transferred'))\
+            .order_by('product__product_name')
+
+    context = {
+        'report_data': report_data,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+    return render(request, 'report_total_transfer_summary.html', context)

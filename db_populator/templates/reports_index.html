@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+    <h1>Reports</h1>
+    <p class="lead">Select a report and provide the necessary parameters to generate it.</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    Batch Production Report
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'report_batch_production' %}" method="get">
+                        {{ batch_form.as_p }}
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    Total Production Summary
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'report_total_production' %}" method="get">
+                        {{ date_range_form.as_p }}
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    Daily Transfer Details
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'report_daily_transfer_details' %}" method="get">
+                        {{ date_range_form.as_p }}
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    Supervisor Transfer Summary
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'report_supervisor_transfer_summary' %}" method="get">
+                        {{ date_range_form.as_p }}
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    Daily Transfer Summary
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'report_daily_transfer_summary' %}" method="get">
+                        {{ date_range_form.as_p }}
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    Total Transfer Summary
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'report_total_transfer_summary' %}" method="get">
+                        {{ date_range_form.as_p }}
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

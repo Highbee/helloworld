@@ -64,6 +64,13 @@ ProductionFormSet = forms.modelformset_factory(
     can_delete=True
 )
 
+class BatchReportForm(forms.Form):
+    batch_number = forms.CharField(label="Batch Number", max_length=10)
+
+class DateRangeReportForm(forms.Form):
+    start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+
 TransferItemsFormSet = forms.inlineformset_factory(
     Transfers,
     TransferItems,

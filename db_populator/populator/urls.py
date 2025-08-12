@@ -23,4 +23,11 @@ urlpatterns = [
     path('api/weekly_production/', views.api_weekly_production, name='api_weekly_production'),
     path('api/monthly_production/', views.api_monthly_production, name='api_monthly_production'),
     path('dashboard/', views.infographics_dashboard, name='infographics_dashboard'),
+    path('reports/', views.reports_index, name='reports_index'),
+    path('reports/batch_production/', views.report_batch_production, name='report_batch_production'),
+    path('reports/daily_transfer_details/', views.report_daily_transfer_details, name='report_daily_transfer_details'),
+    path('reports/supervisor_transfer_summary/', views.report_supervisor_transfer_summary, name='report_supervisor_transfer_summary'),
+    path('reports/daily_transfer_summary/', views.report_daily_transfer_summary, name='report_daily_transfer_summary'),
+    path('reports/total_production/', views.report_total_production, name='report_total_production'),
+    path('reports/total_transfer_summary/', views.report_total_transfer_summary, name='report_total_transfer_summary'),
 ]

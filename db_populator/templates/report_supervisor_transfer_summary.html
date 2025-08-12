@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Supervisor Transfer Summary Report{% endblock %}
+
+{% block content %}
+    <h1>Supervisor Transfer Summary Report</h1>
+
+    {% if start_date and end_date %}
+        <h2 class="h4">Report for {{ start_date }} to {{ end_date }}</h2>
+        <table class="table table-bordered mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Supervisor</th>
+                    <th>Product Name</th>
+                    <th>Total Transferred</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in report_data %}
+                    <tr>
+                        <td>{{ item.transfer__date }}</td>
+                        <td>{{ item.transfer__supervisor_employee__last_name }}</td>
+                        <td>{{ item.product__product_name }}</td>
+                        <td>{{ item.total_transferred }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No transfer data found for this date range.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">Please go to the <a href="{% url 'reports_index' %}">Reports page</a> to generate a report.</p>
+    {% endif %}
+
+    <a href="{% url 'reports_index' %}" class="btn btn-secondary mt-3">Back to Reports</a>
+{% endblock %}
