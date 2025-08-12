@@ -11,9 +11,21 @@ class Status(models.Model):
         db_table = 'status'
         verbose_name_plural = 'statuses'
 
+class FactoryUnit(models.Model):
+    unit_id = models.AutoField(primary_key=True)
+    unit_name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.unit_name
+
+    class Meta:
+        db_table = 'factory_unit'
+        verbose_name_plural = 'factory units'
+
 class Employees(models.Model):
     employee_id = models.AutoField(primary_key=True)
     status = models.ForeignKey(Status, on_delete=models.RESTRICT, db_column='status_id')
+    unit = models.ForeignKey(FactoryUnit, on_delete=models.SET_NULL, null=True, blank=True, db_column='unit_id')
     first_name = models.CharField(max_length=45)
     last_name = models.CharField(max_length=45)
     gender = models.CharField(max_length=1)

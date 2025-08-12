@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers
+from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers, FactoryUnit
 
 class EmployeeForm(forms.ModelForm):
     class Meta:
@@ -28,6 +28,10 @@ class BleachingProcessForm(forms.ModelForm):
         widgets = {
             'processors': forms.CheckboxSelectMultiple,
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['processors'].queryset = Employees.objects.filter(unit__unit_name='Bleaching')
 
 class TransfersForm(forms.ModelForm):
     class Meta:
