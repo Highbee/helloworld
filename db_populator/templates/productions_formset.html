@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Multiple Productions{% endblock %}
+
+{% block content %}
+    <h1>Add Multiple Productions</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Supervisor</th>
+                    <th>Date</th>
+                    <th>Batch Number</th>
+                    <th>Shift</th>
+                    <th>Line</th>
+                    <th>Quantity</th>
+                    <th>Packaging Supervisor</th>
+                    <th>Notes</th>
+                    <th>Delete?</th>
+                </tr>
+            </thead>
+            <tbody id="formset-container">
+                {% for form in formset %}
+                    <tr class="formset-form">
+                        <td>{{ form.product }}</td>
+                        <td>{{ form.supervisor_employee }}</td>
+                        <td>{{ form.date }}</td>
+                        <td>{{ form.batch_number }}</td>
+                        <td>{{ form.shift }}</td>
+                        <td>{{ form.production_line }}</td>
+                        <td>{{ form.quantity_produced }}</td>
+                        <td>{{ form.packaging_supervisor }}</td>
+                        <td>{{ form.notes }}</td>
+                        <td>{{ form.DELETE }}</td>
+                        {{ form.id }}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-success">Save Productions</button>
+        <a href="#" class="btn btn-primary" id="add-form">Add Another Row</a>
+    </form>
+
+    <script type="text/template" id="empty-form-template">
+        <tr class="formset-form">
+            <td>{{ formset.empty_form.product }}</td>
+            <td>{{ formset.empty_form.supervisor_employee }}</td>
+            <td>{{ formset.empty_form.date }}</td>
+            <td>{{ formset.empty_form.batch_number }}</td>
+            <td>{{ formset.empty_form.shift }}</td>
+            <td>{{ formset.empty_form.production_line }}</td>
+            <td>{{ formset.empty_form.quantity_produced }}</td>
+            <td>{{ formset.empty_form.packaging_supervisor }}</td>
+            <td>{{ formset.empty_form.notes }}</td>
+            <td>{{ formset.empty_form.DELETE }}</td>
+            {{ formset.empty_form.id }}
+        </tr>
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addFormButton = document.getElementById('add-form');
+            const formsetContainer = document.getElementById('formset-container');
+            const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
+            const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+
+            addFormButton.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                let formNum = parseInt(totalFormsInput.value);
+
+                // Create a new form from the template
+                let newForm = emptyFormTemplate.replace(/__prefix__/g, formNum);
+
+                // Append the new form to the table body
+                formsetContainer.insertAdjacentHTML('beforeend', newForm);
+
+                // Increment the total forms count
+                totalFormsInput.value = formNum + 1;
+            });
+        });
+    </script>
+{% endblock %}

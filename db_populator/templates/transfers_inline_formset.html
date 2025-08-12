@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Transfer with Items{% endblock %}
+
+{% block content %}
+    <h1>Add Transfer with Items</h1>
+    <form method="post">
+        {% csrf_token %}
+        <h2>Transfer Details</h2>
+        {{ form.as_p }}
+
+        <h2 class="mt-4">Transfer Items</h2>
+        {{ formset.management_form }}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity Transferred</th>
+                    <th>Delete?</th>
+                </tr>
+            </thead>
+            <tbody id="formset-container">
+                {% for form in formset %}
+                    <tr class="formset-form">
+                        <td>{{ form.product }}</td>
+                        <td>{{ form.quantity_transferred }}</td>
+                        <td>{{ form.DELETE }}</td>
+                        {{ form.id }}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-success">Save Transfer</button>
+        <a href="#" class="btn btn-primary" id="add-form">Add Another Item</a>
+    </form>
+
+    <script type="text/template" id="empty-form-template">
+        <tr class="formset-form">
+            <td>{{ formset.empty_form.product }}</td>
+            <td>{{ formset.empty_form.quantity_transferred }}</td>
+            <td>{{ formset.empty_form.DELETE }}</td>
+            {{ formset.empty_form.id }}
+        </tr>
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addFormButton = document.getElementById('add-form');
+            const formsetContainer = document.getElementById('formset-container');
+            const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
+            const totalFormsInput = document.getElementById('id_transferitems_set-TOTAL_FORMS');
+
+            addFormButton.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                let formNum = parseInt(totalFormsInput.value);
+
+                let newForm = emptyFormTemplate.replace(/__prefix__/g, formNum);
+
+                formsetContainer.insertAdjacentHTML('beforeend', newForm);
+
+                totalFormsInput.value = formNum + 1;
+            });
+        });
+    </script>
+{% endblock %}

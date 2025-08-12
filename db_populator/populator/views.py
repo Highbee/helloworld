@@ -3,7 +3,7 @@ from django.db.models import Sum
 from django.http import JsonResponse
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers, TransferItems
-from .forms import EmployeeForm, ProductForm, StatusForm, ProductionsForm, BleachingProcessForm, TransfersForm
+from .forms import EmployeeForm, ProductForm, StatusForm, ProductionsForm, BleachingProcessForm, TransfersForm, ProductionFormSet, TransferItemsFormSet
 
 def employee_list(request):
     employees = Employees.objects.all()
@@ -159,3 +159,31 @@ def api_monthly_production(request):
 
 def infographics_dashboard(request):
     return render(request, 'infographics_dashboard.html')
+
+def productions_formset_view(request):
+    if request.method == 'POST':
+        formset = ProductionFormSet(request.POST)
+        if formset.is_valid():
+            for form in formset:
+                if form.has_changed(): # This ignores empty forms
+                    form.save()
+            return redirect('productions_list') # Or a new success page
+    else:
+        formset = ProductionFormSet(queryset=Productions.objects.none()) # Start with an empty formset
+
+    return render(request, 'productions_formset.html', {'formset': formset})
+
+def transfers_inline_formset_view(request):
+    if request.method == 'POST':
+        form = TransfersForm(request.POST)
+        formset = TransferItemsFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            transfer_instance = form.save()
+            formset.instance = transfer_instance
+            formset.save()
+            return redirect('transfers_list')
+    else:
+        form = TransfersForm()
+        formset = TransferItemsFormSet(queryset=TransferItems.objects.none())
+
+    return render(request, 'transfers_inline_formset.html', {'form': form, 'formset': formset})

@@ -56,3 +56,18 @@ class TransfersForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['date'].initial = date.today
         self.fields['transfer_time'].initial = datetime.now().strftime('%H:%M')
+
+ProductionFormSet = forms.modelformset_factory(
+    Productions,
+    form=ProductionsForm,
+    extra=1,
+    can_delete=True
+)
+
+TransferItemsFormSet = forms.inlineformset_factory(
+    Transfers,
+    TransferItems,
+    fields=('product', 'quantity_transferred'),
+    extra=1,
+    can_delete=True
+)
