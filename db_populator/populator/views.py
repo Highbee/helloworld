@@ -7,7 +7,7 @@ from .forms import EmployeeForm, ProductForm, StatusForm, ProductionsForm, Bleac
 
 def employee_list(request):
     employees = Employees.objects.all()
-    return render(request, 'populator/employee_list.html', {'employees': employees})
+    return render(request, 'employee_list.html', {'employees': employees})
 
 def employee_add(request):
     if request.method == 'POST':
@@ -17,11 +17,11 @@ def employee_add(request):
             return redirect('employee_list')
     else:
         form = EmployeeForm()
-    return render(request, 'populator/employee_form.html', {'form': form})
+    return render(request, 'employee_form.html', {'form': form})
 
 def product_list(request):
     products = Products.objects.all()
-    return render(request, 'populator/product_list.html', {'products': products})
+    return render(request, 'product_list.html', {'products': products})
 
 def product_add(request):
     if request.method == 'POST':
@@ -31,11 +31,11 @@ def product_add(request):
             return redirect('product_list')
     else:
         form = ProductForm()
-    return render(request, 'populator/product_form.html', {'form': form})
+    return render(request, 'product_form.html', {'form': form})
 
 def status_list(request):
     statuses = Status.objects.all()
-    return render(request, 'populator/status_list.html', {'statuses': statuses})
+    return render(request, 'status_list.html', {'statuses': statuses})
 
 def status_add(request):
     if request.method == 'POST':
@@ -45,14 +45,14 @@ def status_add(request):
             return redirect('status_list')
     else:
         form = StatusForm()
-    return render(request, 'populator/status_form.html', {'form': form})
+    return render(request, 'status_form.html', {'form': form})
 
 def home(request):
-    return render(request, 'populator/home.html')
+    return render(request, 'home.html')
 
 def productions_list(request):
     productions = Productions.objects.all()
-    return render(request, 'populator/productions_list.html', {'productions': productions})
+    return render(request, 'productions_list.html', {'productions': productions})
 
 def productions_add(request):
     if request.method == 'POST':
@@ -62,11 +62,11 @@ def productions_add(request):
             return redirect('productions_list')
     else:
         form = ProductionsForm()
-    return render(request, 'populator/productions_form.html', {'form': form})
+    return render(request, 'productions_form.html', {'form': form})
 
 def bleaching_process_list(request):
     bleaching_processes = BleachingProcess.objects.all()
-    return render(request, 'populator/bleaching_process_list.html', {'bleaching_processes': bleaching_processes})
+    return render(request, 'bleaching_process_list.html', {'bleaching_processes': bleaching_processes})
 
 def bleaching_process_add(request):
     if request.method == 'POST':
@@ -76,11 +76,11 @@ def bleaching_process_add(request):
             return redirect('bleaching_process_list')
     else:
         form = BleachingProcessForm()
-    return render(request, 'populator/bleaching_process_form.html', {'form': form})
+    return render(request, 'bleaching_process_form.html', {'form': form})
 
 def transfers_list(request):
     transfers = Transfers.objects.all()
-    return render(request, 'populator/transfers_list.html', {'transfers': transfers})
+    return render(request, 'transfers_list.html', {'transfers': transfers})
 
 def transfers_add(request):
     if request.method == 'POST':
@@ -90,7 +90,7 @@ def transfers_add(request):
             return redirect('transfers_list')
     else:
         form = TransfersForm()
-    return render(request, 'populator/transfers_form.html', {'form': form})
+    return render(request, 'transfers_form.html', {'form': form})
 
 def production_vs_transfers_checker(request):
     # Get total production per product per day
@@ -130,7 +130,7 @@ def production_vs_transfers_checker(request):
     context = {
         'discrepancies': discrepancies,
     }
-    return render(request, 'populator/production_vs_transfers_checker.html', context)
+    return render(request, 'production_vs_transfers_checker.html', context)
 
 def api_daily_production(request):
     production_by_day = Productions.objects.annotate(day=TruncDay('date')).values('day', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('day')
@@ -158,4 +158,4 @@ def api_monthly_production(request):
     return JsonResponse(list(production_by_month), safe=False)
 
 def infographics_dashboard(request):
-    return render(request, 'populator/infographics_dashboard.html')
+    return render(request, 'infographics_dashboard.html')
