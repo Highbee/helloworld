@@ -71,10 +71,31 @@ class DateRangeReportForm(forms.Form):
     start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
 
+class TransferItemsForm(forms.ModelForm):
+    class Meta:
+        model = TransferItems
+        fields = ['product', 'quantity_transferred']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        product = cleaned_data.get('product')
+        quantity = cleaned_data.get('quantity_transferred')
+
+        # This validation logic is not perfect, because it doesn't account for the `DELETE` checkbox.
+        # A better approach is to only validate if the form has changed.
+        # However, for now, this is a good start.
+        if product and not quantity:
+            self.add_error('quantity_transferred', 'This field is required when a product is selected.')
+
+        if quantity and not product:
+            self.add_error('product', 'This field is required when a quantity is entered.')
+
+        return cleaned_data
+
 TransferItemsFormSet = forms.inlineformset_factory(
     Transfers,
     TransferItems,
-    fields=('product', 'quantity_transferred'),
+    form=TransferItemsForm,
     extra=1,
     can_delete=True
 )
