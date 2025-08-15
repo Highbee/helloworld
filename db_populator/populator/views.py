@@ -334,12 +334,13 @@ def productions_formset_view(request):
 def transfers_inline_formset_view(request):
     if request.method == 'POST':
         form = TransfersForm(request.POST)
-        formset = TransferItemsFormSet(request.POST)
-        if form.is_valid() and formset.is_valid():
-            transfer_instance = form.save()
-            formset.instance = transfer_instance
-            formset.save()
-            return redirect('transfers_list')
+        if form.is_valid():
+            transfer_instance = form.save(commit=False)
+            formset = TransferItemsFormSet(request.POST, instance=transfer_instance)
+            if formset.is_valid():
+                transfer_instance.save()
+                formset.save()
+                return redirect('transfers_list')
     else:
         form = TransfersForm()
         formset = TransferItemsFormSet(queryset=TransferItems.objects.none())

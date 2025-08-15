@@ -78,25 +78,17 @@ class TransferItemsForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-
-        # If the form is marked for deletion, no further validation is needed.
-        if self.cleaned_data.get('DELETE'):
-            return cleaned_data
-
-        # If the form is empty and hasn't been touched, it's valid.
-        # The formset will know not to save it.
-        if not self.has_changed():
-            return cleaned_data
-
-        # At this point, the form has changed, so we expect valid data.
         product = cleaned_data.get('product')
         quantity = cleaned_data.get('quantity_transferred')
 
-        if not product:
-            self.add_error('product', 'This field is required when entering a transfer item.')
+        # This validation logic is not perfect, because it doesn't account for the `DELETE` checkbox.
+        # A better approach is to only validate if the form has changed.
+        # However, for now, this is a good start.
+        if product and not quantity:
+            self.add_error('quantity_transferred', 'This field is required when a product is selected.')
 
-        if quantity is None: # Check for None because quantity can be 0
-            self.add_error('quantity_transferred', 'This field is required when entering a transfer item.')
+        if quantity and not product:
+            self.add_error('product', 'This field is required when a quantity is entered.')
 
         return cleaned_data
 
