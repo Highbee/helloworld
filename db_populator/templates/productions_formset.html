@@ -71,9 +71,34 @@
             addFormButton.addEventListener('click', function(e) {
                 e.preventDefault();
                 let formNum = parseInt(totalFormsInput.value);
-                let newForm = emptyFormTemplate.replace(/__prefix__/g, formNum);
-                formsetContainer.insertAdjacentHTML('beforeend', newForm);
+                let lastSupervisorValue = '';
+
+                // Find the last supervisor dropdown and get its value
+                if (formNum > 0) {
+                    const lastForm = formsetContainer.querySelector(`.formset-form:nth-child(${formNum})`);
+                    if (lastForm) {
+                        const lastSupervisorSelect = lastForm.querySelector('select[name$="-supervisor_employee"]');
+                        if (lastSupervisorSelect) {
+                            lastSupervisorValue = lastSupervisorSelect.value;
+                        }
+                    }
+                }
+
+                // Add the new form
+                let newFormHTML = emptyFormTemplate.replace(/__prefix__/g, formNum);
+                formsetContainer.insertAdjacentHTML('beforeend', newFormHTML);
                 totalFormsInput.value = formNum + 1;
+
+                // Set the supervisor value on the new form and trigger change events
+                const newForm = formsetContainer.querySelector(`.formset-form:nth-child(${formNum + 1})`);
+                if (newForm) {
+                    const newSupervisorSelect = newForm.querySelector('select[name$="-supervisor_employee"]');
+                    if (newSupervisorSelect && lastSupervisorValue) {
+                        newSupervisorSelect.value = lastSupervisorValue;
+                        // Dispatch a change event to trigger the other script
+                        newSupervisorSelect.dispatchEvent(new Event('change'));
+                    }
+                }
             });
 
             formsetContainer.addEventListener('change', function(e) {
