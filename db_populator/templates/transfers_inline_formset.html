@@ -50,17 +50,47 @@
             const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
             const totalFormsInput = document.getElementById('id_transferitems_set-TOTAL_FORMS');
 
+            function updateProductDropdowns() {
+                const productSelects = formsetContainer.querySelectorAll('select[name$="-product"]');
+                const selectedValues = new Set();
+
+                // First, gather all selected product values
+                productSelects.forEach(select => {
+                    if (select.value) {
+                        selectedValues.add(select.value);
+                    }
+                });
+
+                // Now, update the options in each dropdown
+                productSelects.forEach(select => {
+                    const currentSelectedValue = select.value;
+                    select.querySelectorAll('option').forEach(option => {
+                        if (option.value && selectedValues.has(option.value) && option.value !== currentSelectedValue) {
+                            option.style.display = 'none';
+                        } else {
+                            option.style.display = '';
+                        }
+                    });
+                });
+            }
+
             addFormButton.addEventListener('click', function(e) {
                 e.preventDefault();
-
                 let formNum = parseInt(totalFormsInput.value);
-
                 let newForm = emptyFormTemplate.replace(/__prefix__/g, formNum);
-
                 formsetContainer.insertAdjacentHTML('beforeend', newForm);
-
                 totalFormsInput.value = formNum + 1;
+                updateProductDropdowns(); // Update dropdowns after adding a new form
             });
+
+            formsetContainer.addEventListener('change', function(e) {
+                if (e.target && e.target.matches('select[name$="-product"]')) {
+                    updateProductDropdowns();
+                }
+            });
+
+            // Initial call to set the state correctly on page load
+            updateProductDropdowns();
         });
     </script>
 {% endblock %}
