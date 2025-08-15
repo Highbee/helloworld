@@ -66,20 +66,29 @@
             const formsetContainer = document.getElementById('formset-container');
             const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
             const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+            const supervisorsData = JSON.parse('{{ supervisors_json|escapejs }}');
 
             addFormButton.addEventListener('click', function(e) {
                 e.preventDefault();
-
                 let formNum = parseInt(totalFormsInput.value);
-
-                // Create a new form from the template
                 let newForm = emptyFormTemplate.replace(/__prefix__/g, formNum);
-
-                // Append the new form to the table body
                 formsetContainer.insertAdjacentHTML('beforeend', newForm);
-
-                // Increment the total forms count
                 totalFormsInput.value = formNum + 1;
+            });
+
+            formsetContainer.addEventListener('change', function(e) {
+                if (e.target && e.target.matches('select[name$="-supervisor_employee"]')) {
+                    const supervisorSelect = e.target;
+                    const formPrefix = supervisorSelect.name.replace('-supervisor_employee', '');
+                    const packagingSupervisorInput = document.getElementById(`id_${formPrefix}-packaging_supervisor`);
+
+                    const selectedSupervisorId = supervisorSelect.value;
+                    if (selectedSupervisorId && supervisorsData[selectedSupervisorId]) {
+                        packagingSupervisorInput.value = supervisorsData[selectedSupervisorId];
+                    } else {
+                        packagingSupervisorInput.value = '';
+                    }
+                }
             });
         });
     </script>

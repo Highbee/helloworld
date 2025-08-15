@@ -10,4 +10,21 @@
         <button type="submit" class="btn btn-success">Save</button>
         <a href="{% url 'productions_list' %}" class="btn btn-secondary">Cancel</a>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const supervisorSelect = document.getElementById('id_supervisor_employee');
+            const packagingSupervisorInput = document.getElementById('id_packaging_supervisor');
+            const supervisorsData = JSON.parse('{{ supervisors_json|escapejs }}');
+
+            supervisorSelect.addEventListener('change', function() {
+                const selectedSupervisorId = this.value;
+                if (selectedSupervisorId && supervisorsData[selectedSupervisorId]) {
+                    packagingSupervisorInput.value = supervisorsData[selectedSupervisorId];
+                } else {
+                    packagingSupervisorInput.value = '';
+                }
+            });
+        });
+    </script>
 {% endblock %}

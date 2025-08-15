@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.db.models import Sum
 from django.http import JsonResponse
+import json
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers, TransferItems
 from .forms import EmployeeForm, ProductForm, StatusForm, ProductionsForm, BleachingProcessForm, TransfersForm, ProductionFormSet, TransferItemsFormSet, BatchReportForm, DateRangeReportForm
@@ -99,7 +100,16 @@ def productions_add(request):
             return redirect('productions_list')
     else:
         form = ProductionsForm()
-    return render(request, 'productions_form.html', {'form': form})
+
+    supervisors = Employees.objects.filter(status__status_name='Supervisor')
+    supervisors_json = json.dumps({
+        s.employee_id: f'{s.first_name} {s.last_name}' for s in supervisors
+    })
+
+    return render(request, 'productions_form.html', {
+        'form': form,
+        'supervisors_json': supervisors_json,
+    })
 
 def bleaching_process_list(request):
     bleaching_processes = BleachingProcess.objects.select_related('production_chemist_employee').all()
@@ -311,7 +321,15 @@ def productions_formset_view(request):
     else:
         formset = ProductionFormSet(queryset=Productions.objects.none())
 
-    return render(request, 'productions_formset.html', {'formset': formset})
+    supervisors = Employees.objects.filter(status__status_name='Supervisor')
+    supervisors_json = json.dumps({
+        s.employee_id: f'{s.first_name} {s.last_name}' for s in supervisors
+    })
+
+    return render(request, 'productions_formset.html', {
+        'formset': formset,
+        'supervisors_json': supervisors_json,
+    })
 
 def transfers_inline_formset_view(request):
     if request.method == 'POST':
