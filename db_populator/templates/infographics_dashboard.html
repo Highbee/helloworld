@@ -5,6 +5,38 @@
 {% block content %}
     <h1>Infographics Dashboard</h1>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            Filter Dashboard
+        </div>
+        <div class="card-body">
+            <form id="filter-form">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="product" class="form-label">Product</label>
+                        <select name="product" id="product" class="form-control">
+                            <option value="">All Products</option>
+                            {% for p in products %}
+                                <option value="{{ p.product_id }}">{{ p.product_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="start_date" class="form-label">Start Date</label>
+                        <input type="date" name="start_date" id="start_date" class="form-control">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <input type="date" name="end_date" id="end_date" class="form-control">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'infographics_dashboard' %}" class="btn btn-secondary">Clear</a>
+            </form>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-md-12 mb-4">
             <div class="card">
@@ -39,58 +71,52 @@
     </div>
 
     <script>
-        // Helper function to generate random colors for the charts
+        let dailyChart, weeklyChart, monthlyChart;
+
         function getRandomColor() {
-            var letters = '0123456789ABCDEF'.split('');
-            var color = '#';
-            for (var i = 0; i < 6; i++) {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
                 color += letters[Math.floor(Math.random() * 16)];
             }
             return color;
         }
 
-        // Daily Production Chart
-        fetch('/api/daily_production/')
-            .then(response => response.json())
-            .then(data => {
-                const products = [...new Set(data.map(item => item.product__product_name))];
-                const labels = [...new Set(data.map(item => item.day))].sort();
+        function fetchAndRenderCharts() {
+            const form = document.getElementById('filter-form');
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
 
-                const datasets = products.map(product => {
-                    return {
+            // Daily Production Chart
+            fetch(`/api/daily_production/?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (dailyChart) dailyChart.destroy();
+                    const products = [...new Set(data.map(item => item.product__product_name))];
+                    const labels = [...new Set(data.map(item => item.day))].sort();
+                    const datasets = products.map(product => ({
                         label: product,
                         data: labels.map(label => {
                             const item = data.find(d => d.day === label && d.product__product_name === product);
                             return item ? item.total_produced : 0;
                         }),
                         backgroundColor: getRandomColor(),
-                    };
+                    }));
+                    dailyChart = new Chart(document.getElementById('dailyProductionChart'), {
+                        type: 'bar',
+                        data: { labels, datasets },
+                        options: { scales: { x: { stacked: true }, y: { stacked: true } } }
+                    });
                 });
 
-                new Chart(document.getElementById('dailyProductionChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: datasets
-                    },
-                    options: {
-                        scales: {
-                            x: { stacked: true },
-                            y: { stacked: true }
-                        }
-                    }
-                });
-            });
-
-        // Weekly Production Chart
-        fetch('/api/weekly_production/')
-            .then(response => response.json())
-            .then(data => {
-                const products = [...new Set(data.map(item => item.product__product_name))];
-                const labels = [...new Set(data.map(item => item.week))].sort();
-
-                const datasets = products.map(product => {
-                    return {
+            // Weekly Production Chart
+            fetch(`/api/weekly_production/?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (weeklyChart) weeklyChart.destroy();
+                    const products = [...new Set(data.map(item => item.product__product_name))];
+                    const labels = [...new Set(data.map(item => item.week))].sort();
+                    const datasets = products.map(product => ({
                         label: product,
                         data: labels.map(label => {
                             const item = data.find(d => d.week === label && d.product__product_name === product);
@@ -98,27 +124,21 @@
                         }),
                         borderColor: getRandomColor(),
                         fill: false,
-                    };
+                    }));
+                    weeklyChart = new Chart(document.getElementById('weeklyProductionChart'), {
+                        type: 'line',
+                        data: { labels, datasets }
+                    });
                 });
 
-                new Chart(document.getElementById('weeklyProductionChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: datasets
-                    }
-                });
-            });
-
-        // Monthly Production Chart
-        fetch('/api/monthly_production/')
-            .then(response => response.json())
-            .then(data => {
-                const products = [...new Set(data.map(item => item.product__product_name))];
-                const labels = [...new Set(data.map(item => item.month))].sort();
-
-                const datasets = products.map(product => {
-                    return {
+            // Monthly Production Chart
+            fetch(`/api/monthly_production/?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (monthlyChart) monthlyChart.destroy();
+                    const products = [...new Set(data.map(item => item.product__product_name))];
+                    const labels = [...new Set(data.map(item => item.month))].sort();
+                    const datasets = products.map(product => ({
                         label: product,
                         data: labels.map(label => {
                             const item = data.find(d => d.month === label && d.product__product_name === product);
@@ -126,16 +146,20 @@
                         }),
                         borderColor: getRandomColor(),
                         fill: false,
-                    };
+                    }));
+                    monthlyChart = new Chart(document.getElementById('monthlyProductionChart'), {
+                        type: 'line',
+                        data: { labels, datasets }
+                    });
                 });
+        }
 
-                new Chart(document.getElementById('monthlyProductionChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: datasets
-                    }
-                });
-            });
+        document.getElementById('filter-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetchAndRenderCharts();
+        });
+
+        // Initial render
+        fetchAndRenderCharts();
     </script>
 {% endblock %}

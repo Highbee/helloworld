@@ -51,8 +51,45 @@ def home(request):
     return render(request, 'home.html')
 
 def productions_list(request):
-    productions = Productions.objects.all()
-    return render(request, 'productions_list.html', {'productions': productions})
+    productions = Productions.objects.select_related('product', 'supervisor_employee').all()
+
+    # Filtering
+    product_filter = request.GET.get('product')
+    supervisor_filter = request.GET.get('supervisor')
+    date_after_filter = request.GET.get('date_after')
+    date_before_filter = request.GET.get('date_before')
+    shift_filter = request.GET.get('shift')
+    line_filter = request.GET.get('line')
+
+    if product_filter:
+        productions = productions.filter(product__product_id=product_filter)
+    if supervisor_filter:
+        productions = productions.filter(supervisor_employee__employee_id=supervisor_filter)
+    if date_after_filter:
+        productions = productions.filter(date__gte=date_after_filter)
+    if date_before_filter:
+        productions = productions.filter(date__lte=date_before_filter)
+    if shift_filter:
+        productions = productions.filter(shift__icontains=shift_filter)
+    if line_filter:
+        productions = productions.filter(production_line__icontains=line_filter)
+
+    # Sorting
+    sort_by = request.GET.get('sort', 'production_id')
+    order = request.GET.get('order', 'asc')
+    if order == 'desc':
+        sort_by = f'-{sort_by}'
+    productions = productions.order_by(sort_by)
+
+    context = {
+        'productions': productions,
+        'products': Products.objects.all(),
+        'supervisors': Employees.objects.filter(status__status_name='Supervisor'),
+        'filter_values': request.GET,
+        'sort_by': request.GET.get('sort', 'production_id'),
+        'order': request.GET.get('order', 'asc'),
+    }
+    return render(request, 'productions_list.html', context)
 
 def productions_add(request):
     if request.method == 'POST':
@@ -65,8 +102,38 @@ def productions_add(request):
     return render(request, 'productions_form.html', {'form': form})
 
 def bleaching_process_list(request):
-    bleaching_processes = BleachingProcess.objects.all()
-    return render(request, 'bleaching_process_list.html', {'bleaching_processes': bleaching_processes})
+    bleaching_processes = BleachingProcess.objects.select_related('production_chemist_employee').all()
+
+    # Filtering
+    chemist_filter = request.GET.get('chemist')
+    date_after_filter = request.GET.get('date_after')
+    date_before_filter = request.GET.get('date_before')
+    shift_filter = request.GET.get('shift')
+
+    if chemist_filter:
+        bleaching_processes = bleaching_processes.filter(production_chemist_employee__employee_id=chemist_filter)
+    if date_after_filter:
+        bleaching_processes = bleaching_processes.filter(date__gte=date_after_filter)
+    if date_before_filter:
+        bleaching_processes = bleaching_processes.filter(date__lte=date_before_filter)
+    if shift_filter:
+        bleaching_processes = bleaching_processes.filter(shift__icontains=shift_filter)
+
+    # Sorting
+    sort_by = request.GET.get('sort', 'idbleaching_process')
+    order = request.GET.get('order', 'asc')
+    if order == 'desc':
+        sort_by = f'-{sort_by}'
+    bleaching_processes = bleaching_processes.order_by(sort_by)
+
+    context = {
+        'bleaching_processes': bleaching_processes,
+        'chemists': Employees.objects.filter(status__status_name='Chemist'),
+        'filter_values': request.GET,
+        'sort_by': request.GET.get('sort', 'idbleaching_process'),
+        'order': request.GET.get('order', 'asc'),
+    }
+    return render(request, 'bleaching_process_list.html', context)
 
 def bleaching_process_add(request):
     if request.method == 'POST':
@@ -79,8 +146,38 @@ def bleaching_process_add(request):
     return render(request, 'bleaching_process_form.html', {'form': form})
 
 def transfers_list(request):
-    transfers = Transfers.objects.all()
-    return render(request, 'transfers_list.html', {'transfers': transfers})
+    transfers = Transfers.objects.select_related('supervisor_employee').all()
+
+    # Filtering
+    supervisor_filter = request.GET.get('supervisor')
+    date_after_filter = request.GET.get('date_after')
+    date_before_filter = request.GET.get('date_before')
+    line_filter = request.GET.get('line')
+
+    if supervisor_filter:
+        transfers = transfers.filter(supervisor_employee__employee_id=supervisor_filter)
+    if date_after_filter:
+        transfers = transfers.filter(date__gte=date_after_filter)
+    if date_before_filter:
+        transfers = transfers.filter(date__lte=date_before_filter)
+    if line_filter:
+        transfers = transfers.filter(production_line__icontains=line_filter)
+
+    # Sorting
+    sort_by = request.GET.get('sort', 'transfer_id')
+    order = request.GET.get('order', 'asc')
+    if order == 'desc':
+        sort_by = f'-{sort_by}'
+    transfers = transfers.order_by(sort_by)
+
+    context = {
+        'transfers': transfers,
+        'supervisors': Employees.objects.filter(status__status_name='Supervisor'),
+        'filter_values': request.GET,
+        'sort_by': request.GET.get('sort', 'transfer_id'),
+        'order': request.GET.get('order', 'asc'),
+    }
+    return render(request, 'transfers_list.html', context)
 
 def transfers_add(request):
     if request.method == 'POST':
@@ -133,7 +230,21 @@ def production_vs_transfers_checker(request):
     return render(request, 'production_vs_transfers_checker.html', context)
 
 def api_daily_production(request):
-    production_by_day = Productions.objects.annotate(day=TruncDay('date')).values('day', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('day')
+    productions = Productions.objects.all()
+
+    # Filtering
+    product_filter = request.GET.get('product')
+    start_date_filter = request.GET.get('start_date')
+    end_date_filter = request.GET.get('end_date')
+
+    if product_filter:
+        productions = productions.filter(product__product_id=product_filter)
+    if start_date_filter:
+        productions = productions.filter(date__gte=start_date_filter)
+    if end_date_filter:
+        productions = productions.filter(date__lte=end_date_filter)
+
+    production_by_day = productions.annotate(day=TruncDay('date')).values('day', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('day')
 
     # Convert date objects to strings for JSON serialization
     for item in production_by_day:
@@ -142,7 +253,21 @@ def api_daily_production(request):
     return JsonResponse(list(production_by_day), safe=False)
 
 def api_weekly_production(request):
-    production_by_week = Productions.objects.annotate(week=TruncWeek('date')).values('week', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('week')
+    productions = Productions.objects.all()
+
+    # Filtering
+    product_filter = request.GET.get('product')
+    start_date_filter = request.GET.get('start_date')
+    end_date_filter = request.GET.get('end_date')
+
+    if product_filter:
+        productions = productions.filter(product__product_id=product_filter)
+    if start_date_filter:
+        productions = productions.filter(date__gte=start_date_filter)
+    if end_date_filter:
+        productions = productions.filter(date__lte=end_date_filter)
+
+    production_by_week = productions.annotate(week=TruncWeek('date')).values('week', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('week')
 
     for item in production_by_week:
         item['week'] = item['week'].strftime('%Y-%m-%d')
@@ -150,7 +275,21 @@ def api_weekly_production(request):
     return JsonResponse(list(production_by_week), safe=False)
 
 def api_monthly_production(request):
-    production_by_month = Productions.objects.annotate(month=TruncMonth('date')).values('month', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('month')
+    productions = Productions.objects.all()
+
+    # Filtering
+    product_filter = request.GET.get('product')
+    start_date_filter = request.GET.get('start_date')
+    end_date_filter = request.GET.get('end_date')
+
+    if product_filter:
+        productions = productions.filter(product__product_id=product_filter)
+    if start_date_filter:
+        productions = productions.filter(date__gte=start_date_filter)
+    if end_date_filter:
+        productions = productions.filter(date__lte=end_date_filter)
+
+    production_by_month = productions.annotate(month=TruncMonth('date')).values('month', 'product__product_name').annotate(total_produced=Sum('quantity_produced')).order_by('month')
 
     for item in production_by_month:
         item['month'] = item['month'].strftime('%Y-%m')
@@ -158,7 +297,10 @@ def api_monthly_production(request):
     return JsonResponse(list(production_by_month), safe=False)
 
 def infographics_dashboard(request):
-    return render(request, 'infographics_dashboard.html')
+    context = {
+        'products': Products.objects.all(),
+    }
+    return render(request, 'infographics_dashboard.html', context)
 
 def productions_formset_view(request):
     if request.method == 'POST':

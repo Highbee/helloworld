@@ -7,14 +7,62 @@
         <h1>Transfers</h1>
         <a href="{% url 'transfers_add_multiple' %}" class="btn btn-primary">Add Transfer with Items</a>
     </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            Filter Transfers
+        </div>
+        <div class="card-body">
+            <form method="get" action="">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="supervisor" class="form-label">Supervisor</label>
+                        <select name="supervisor" id="supervisor" class="form-control">
+                            <option value="">All Supervisors</option>
+                            {% for s in supervisors %}
+                                <option value="{{ s.employee_id }}" {% if filter_values.supervisor == s.employee_id|stringformat:"s" %}selected{% endif %}>{{ s.first_name }} {{ s.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="line" class="form-label">Production Line</label>
+                        <input type="text" name="line" id="line" class="form-control" value="{{ filter_values.line }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="date_after" class="form-label">Date From</label>
+                        <input type="date" name="date_after" id="date_after" class="form-control" value="{{ filter_values.date_after }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="date_before" class="form-label">Date To</label>
+                        <input type="date" name="date_before" id="date_before" class="form-control" value="{{ filter_values.date_before }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'transfers_list' %}" class="btn btn-secondary">Clear</a>
+            </form>
+        </div>
+    </div>
+
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Supervisor</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Line</th>
+                {% with 'transfer_id' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">ID {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'supervisor_employee__last_name' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Supervisor {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'date' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Date {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'transfer_time' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Time {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'production_line' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Line {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
             </tr>
         </thead>
         <tbody>
@@ -28,7 +76,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="5">No transfers found.</td>
+                    <td colspan="5" class="text-center">No transfers found matching your criteria.</td>
                 </tr>
             {% endfor %}
         </tbody>

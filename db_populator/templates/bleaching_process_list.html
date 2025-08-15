@@ -7,14 +7,62 @@
         <h1>Bleaching Processes</h1>
         <a href="{% url 'bleaching_process_add' %}" class="btn btn-primary">Add Bleaching Process</a>
     </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            Filter Bleaching Processes
+        </div>
+        <div class="card-body">
+            <form method="get" action="">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="chemist" class="form-label">Production Chemist</label>
+                        <select name="chemist" id="chemist" class="form-control">
+                            <option value="">All Chemists</option>
+                            {% for c in chemists %}
+                                <option value="{{ c.employee_id }}" {% if filter_values.chemist == c.employee_id|stringformat:"s" %}selected{% endif %}>{{ c.first_name }} {{ c.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="shift" class="form-label">Shift</label>
+                        <input type="text" name="shift" id="shift" class="form-control" value="{{ filter_values.shift }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="date_after" class="form-label">Date From</label>
+                        <input type="date" name="date_after" id="date_after" class="form-control" value="{{ filter_values.date_after }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="date_before" class="form-label">Date To</label>
+                        <input type="date" name="date_before" id="date_before" class="form-control" value="{{ filter_values.date_before }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'bleaching_process_list' %}" class="btn btn-secondary">Clear</a>
+            </form>
+        </div>
+    </div>
+
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Production Chemist</th>
-                <th>Batch Number</th>
-                <th>Date</th>
-                <th>Shift</th>
+                {% with 'idbleaching_process' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">ID {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'production_chemist_employee__last_name' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Production Chemist {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'batch_number' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Batch Number {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'date' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Date {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'shift' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Shift {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
                 <th>Comments</th>
             </tr>
         </thead>
@@ -30,7 +78,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6">No bleaching processes found.</td>
+                    <td colspan="6" class="text-center">No bleaching processes found matching your criteria.</td>
                 </tr>
             {% endfor %}
         </tbody>

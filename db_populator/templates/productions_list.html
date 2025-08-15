@@ -7,17 +7,84 @@
         <h1>Productions</h1>
         <a href="{% url 'productions_add_multiple' %}" class="btn btn-primary">Add Multiple Productions</a>
     </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            Filter Productions
+        </div>
+        <div class="card-body">
+            <form method="get" action="">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="product" class="form-label">Product</label>
+                        <select name="product" id="product" class="form-control">
+                            <option value="">All Products</option>
+                            {% for p in products %}
+                                <option value="{{ p.product_id }}" {% if filter_values.product == p.product_id|stringformat:"s" %}selected{% endif %}>{{ p.product_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="supervisor" class="form-label">Supervisor</label>
+                        <select name="supervisor" id="supervisor" class="form-control">
+                            <option value="">All Supervisors</option>
+                            {% for s in supervisors %}
+                                <option value="{{ s.employee_id }}" {% if filter_values.supervisor == s.employee_id|stringformat:"s" %}selected{% endif %}>{{ s.first_name }} {{ s.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="shift" class="form-label">Shift</label>
+                        <input type="text" name="shift" id="shift" class="form-control" value="{{ filter_values.shift }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="line" class="form-label">Production Line</label>
+                        <input type="text" name="line" id="line" class="form-control" value="{{ filter_values.line }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="date_after" class="form-label">Date From</label>
+                        <input type="date" name="date_after" id="date_after" class="form-control" value="{{ filter_values.date_after }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="date_before" class="form-label">Date To</label>
+                        <input type="date" name="date_before" id="date_before" class="form-control" value="{{ filter_values.date_before }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'productions_list' %}" class="btn btn-secondary">Clear</a>
+            </form>
+        </div>
+    </div>
+
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Product</th>
-                <th>Supervisor</th>
-                <th>Date</th>
-                <th>Batch Number</th>
-                <th>Shift</th>
-                <th>Line</th>
-                <th>Quantity</th>
+                {% with 'production_id' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">ID {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'product__product_name' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Product {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'supervisor_employee__last_name' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Supervisor {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'date' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Date {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'batch_number' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Batch Number {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'shift' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Shift {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'production_line' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Line {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'quantity_produced' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Quantity {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
             </tr>
         </thead>
         <tbody>
@@ -34,7 +101,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="8">No productions found.</td>
+                    <td colspan="8" class="text-center">No productions found matching your criteria.</td>
                 </tr>
             {% endfor %}
         </tbody>
