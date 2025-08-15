@@ -61,6 +61,12 @@
                 {% with 'date' as sort_field %}
                     <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Date {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
                 {% endwith %}
+                {% with 'start_time' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Start Time {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
+                {% with 'end_time' as sort_field %}
+                    <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">End Time {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
+                {% endwith %}
                 {% with 'shift' as sort_field %}
                     <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Shift {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
                 {% endwith %}
@@ -81,12 +87,14 @@
                     </td>
                     <td>{{ process.batch_number }}</td>
                     <td>{{ process.date }}</td>
+                    <td>{{ process.start_time|time:"H:i" }}</td>
+                    <td>{{ process.end_time|time:"H:i" }}</td>
                     <td>{{ process.shift }}</td>
                     <td>{{ process.comments }}</td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center">No bleaching processes found matching your criteria.</td>
+                    <td colspan="9" class="text-center">No bleaching processes found matching your criteria.</td>
                 </tr>
             {% endfor %}
         </tbody>

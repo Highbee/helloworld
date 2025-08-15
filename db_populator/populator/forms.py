@@ -36,6 +36,8 @@ class BleachingProcessForm(forms.ModelForm):
         widgets = {
             'processors': forms.CheckboxSelectMultiple,
             'date': forms.DateInput(attrs={'type': 'date'}),
+            'start_time': forms.TimeInput(attrs={'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time'}),
         }
 
     def __init__(self, *args, **kwargs):

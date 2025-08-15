@@ -55,6 +55,8 @@ class BleachingProcess(models.Model):
     production_chemist_employee = models.ForeignKey(Employees, on_delete=models.RESTRICT, related_name='bleaching_processes_as_chemist', db_column='production_chemist_employee_id')
     batch_number = models.CharField(max_length=9, unique=True, blank=True, null=True)
     date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
     shift = models.CharField(max_length=9)
     comments = models.CharField(max_length=255)
     number_of_cakes_to_rebleached = models.IntegerField()
