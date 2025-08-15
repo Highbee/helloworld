@@ -54,6 +54,7 @@
                 {% with 'production_chemist_employee__last_name' as sort_field %}
                     <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Production Chemist {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
                 {% endwith %}
+                <th>All Processors</th>
                 {% with 'batch_number' as sort_field %}
                     <th><a href="?sort={{ sort_field }}&order={% if sort_by == sort_field and order == 'asc' %}desc{% else %}asc{% endif %}&{{ filter_values.urlencode }}">Batch Number {% if sort_by == sort_field %}{% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% endif %}</a></th>
                 {% endwith %}
@@ -71,6 +72,13 @@
                 <tr>
                     <td>{{ process.idbleaching_process }}</td>
                     <td>{{ process.production_chemist_employee.first_name }} {{ process.production_chemist_employee.last_name }}</td>
+                    <td>
+                        {% for processor in process.processors.all %}
+                            {{ processor.first_name }} {{ processor.last_name }}{% if not forloop.last %},<br>{% endif %}
+                        {% empty %}
+                            N/A
+                        {% endfor %}
+                    </td>
                     <td>{{ process.batch_number }}</td>
                     <td>{{ process.date }}</td>
                     <td>{{ process.shift }}</td>
@@ -78,7 +86,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center">No bleaching processes found matching your criteria.</td>
+                    <td colspan="7" class="text-center">No bleaching processes found matching your criteria.</td>
                 </tr>
             {% endfor %}
         </tbody>

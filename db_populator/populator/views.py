@@ -112,7 +112,7 @@ def productions_add(request):
     })
 
 def bleaching_process_list(request):
-    bleaching_processes = BleachingProcess.objects.select_related('production_chemist_employee').all()
+    bleaching_processes = BleachingProcess.objects.select_related('production_chemist_employee').prefetch_related('processors').all()
 
     # Filtering
     chemist_filter = request.GET.get('chemist')
