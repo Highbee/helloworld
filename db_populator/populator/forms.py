@@ -40,7 +40,10 @@ class BleachingProcessForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['processors'].queryset = Employees.objects.filter(unit__unit_name='Bleaching')
+        bleaching_unit_employees = Employees.objects.filter(unit__unit_name='Bleaching')
+        self.fields['production_chemist_employee'].queryset = bleaching_unit_employees
+        self.fields['processors'].queryset = bleaching_unit_employees
+        self.fields['production_chemist_employee'].label = "Reporting Chemist"
         self.fields['date'].initial = date.today
 
 class TransfersForm(forms.ModelForm):
