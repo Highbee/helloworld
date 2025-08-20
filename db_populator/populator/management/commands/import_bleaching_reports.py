@@ -1,5 +1,8 @@
 import re
 from datetime import datetime, timedelta
+from django.core.management.base import BaseCommand, CommandError
+
+# --- Helper functions from the original script ---
 
 def parse_duration_to_minutes(duration_str):
     if not duration_str or not isinstance(duration_str, str) or duration_str.lower().strip() in ['nil', 'n/a', '']:
@@ -100,7 +103,6 @@ def parse_report_block(reports, author, timestamp, text):
     ]
     key_regex = r'(' + '|'.join(keys) + r')'
 
-    # Use findall to get all key-value pairs
     pairs = re.findall(r'(' + '|'.join(keys) + r')\s*:?\s*(.*)', text, re.IGNORECASE)
 
     data = {key.strip().upper(): val.strip() for key, val in pairs}
@@ -170,7 +172,7 @@ def get_employee_id(name_or_phone, employee_map):
                 return emp_id
     return None
 
-def generate_sql(reports):
+def generate_sql(reports, output_file):
     employee_map = {
         'Emmanuel Olaoye': 1, 'olaoye e.a': 1, 'olaoye emmanuel': 1, '9060834296': 1,
         'Niyi Olayemi': 2, 'olayemi oyeniyi': 2, 'olayemi o.s': 2, '7062716844': 2,
@@ -231,10 +233,25 @@ def generate_sql(reports):
                             f"VALUES ({sql_safe(report['batch_number'])}, {emp_id});\n")
                 sql_statements.append(kier_sql)
 
-    with open('data_population.sql', 'w', encoding='utf-8') as f:
+    with open(output_file, 'w', encoding='utf-8') as f:
         f.writelines(sql_statements)
 
-if __name__ == '__main__':
-    parsed_reports = parse_whatsapp_chat('whatsapp_chat.txt')
-    generate_sql(parsed_reports)
-    print(f"Generated data_population.sql successfully with {len(parsed_reports)} reports.")
+class Command(BaseCommand):
+    help = 'Parses a WhatsApp chat log to generate an SQL file for populating bleaching process data.'
+
+    def add_arguments(self, parser):
+        parser.add_argument('chat_file', type=str, help='The path to the WhatsApp chat log file.')
+        parser.add_argument('output_sql_file', type=str, help='The path to the output SQL file.')
+
+    def handle(self, *args, **options):
+        chat_file_path = options['chat_file']
+        output_sql_path = options['output_sql_file']
+
+        try:
+            parsed_reports = parse_whatsapp_chat(chat_file_path)
+            generate_sql(parsed_reports, output_sql_path)
+            self.stdout.write(self.style.SUCCESS(f"Generated {output_sql_path} successfully with {len(parsed_reports)} reports."))
+        except FileNotFoundError:
+            raise CommandError(f'File not found at "{chat_file_path}"')
+        except Exception as e:
+            raise CommandError(f'An error occurred: {e}')
