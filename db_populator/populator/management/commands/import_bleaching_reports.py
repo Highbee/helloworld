@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand, CommandError
 
-# --- Helper functions from the original script ---
+# --- Helper functions ---
 
 def parse_duration_to_minutes(duration_str):
     if not duration_str or not isinstance(duration_str, str) or duration_str.lower().strip() in ['nil', 'n/a', '']:
@@ -94,7 +94,7 @@ def parse_report_block(reports, author, timestamp, text):
         'processors': [],
     }
 
-    text = text.replace('*', '').replace('🔹', '\n- ')
+    text_upper = text.upper()
 
     keys = [
         'BATCH NUMBER', 'DATE', 'SHIFT', 'PROCESS START', 'HEATING DURATION', 'HEATING', 'KEEPING',
@@ -103,9 +103,19 @@ def parse_report_block(reports, author, timestamp, text):
     ]
     key_regex = r'(' + '|'.join(keys) + r')'
 
-    pairs = re.findall(r'(' + '|'.join(keys) + r')\s*:?\s*(.*)', text, re.IGNORECASE)
+    parts = re.split(key_regex, text, flags=re.IGNORECASE)
 
-    data = {key.strip().upper(): val.strip() for key, val in pairs}
+    data = {}
+    remaining_text = ''
+    if len(parts) > 1:
+        remaining_text = parts[0]
+        for i in range(1, len(parts), 2):
+            key = parts[i].strip().upper()
+            value_block = parts[i+1]
+
+            value_lines = value_block.strip().split('\n')
+            value = ' '.join(v.replace(':', '').strip() for v in value_lines)
+            data[key] = value
 
     report['batch_number'] = data.get('BATCH NUMBER')
     if not report['batch_number']:
@@ -144,12 +154,14 @@ def parse_report_block(reports, author, timestamp, text):
     report['maintenance_notes'] = data.get('MAINTENANCE', 'N/A')
     report['remarks'] = data.get('REMARKS', 'N/A')
 
-    if 'PROCESS DONE BY' in text.upper():
-        processors_text = text.upper().split('PROCESS DONE BY')[1]
-        report['processors'] = [name.strip() for name in re.split(r'\n|-', processors_text) if name.strip() and 'PROCESS' not in name]
-    elif any(name in text.upper() for name in ['AZEEZ KABIR', 'OLAYEMI OYENIYI', 'AFUYE OLATUNDE']):
-         processors_list = [line.strip() for line in text.split('\n') if any(op_name in line.upper() for op_name in ['AZEEZ', 'OLAYEMI', 'AFUYE'])]
-         report['processors'] = [p for p in processors_list if 'PROCESS' not in p]
+    processors_text = ""
+    if 'PROCESS DONE BY' in text_upper:
+        processors_text = text_upper.split('PROCESS DONE BY')[1]
+    elif any(name in text_upper for name in ['AZEEZ KABIR', 'OLAYEMI OYENIYI', 'AFUYE OLATUNDE']):
+         processors_text = '\n'.join([line for line in text.split('\n') if any(op_name in line.upper() for op_name in ['AZEEZ', 'OLAYEMI', 'AFUYE'])])
+
+    if processors_text:
+        report['processors'] = [name.strip() for name in re.split(r'\n|-|🔹', processors_text) if name.strip() and 'PROCESS' not in name.upper()]
 
     if report['batch_number'] not in reports or reports[report['batch_number']]['timestamp'] < report['timestamp']:
         reports[report['batch_number']] = report
@@ -176,19 +188,30 @@ def generate_sql(reports, output_file):
     employee_map = {
         'Emmanuel Olaoye': 1, 'olaoye e.a': 1, 'olaoye emmanuel': 1, '9060834296': 1,
         'Niyi Olayemi': 2, 'olayemi oyeniyi': 2, 'olayemi o.s': 2, '7062716844': 2,
-        'Joel QC': 3, 'Joel Afuye': 3, 'Afuye Olatunde Joel': 3, 'afuye joel': 3, 'afuye olatunde': 3, '7066150893': 3,
-        'Azeez Production Officer': 4, 'Azeez Kabir': 4, 'azeez k.l': 4, '8105931726': 4,
+        'Joel Afuye': 3, 'afuye olatunde joel': 3, 'afuye joel': 3, 'afuye olatunde': 3, '7066150893': 3,
+        'Azeez Kabir': 4, 'azeez k.l': 4, '8105931726': 4,
         'jubfuns': 5,
         'PrinceAjibola Abdulateef APM': 6,
         'Mr Dare Production Supervisor': 7, 'Dare Oloniruha': 7,
         'Mr Ibrahim Production Executive': 8, 'Ibrahim Opeyemi': 8,
         'Highbee': 9
     }
+    bleaching_operator_ids = {1, 2, 3, 4}
 
     sql_statements = []
 
     for batch_number, report in sorted(reports.items(), key=lambda item: item[1]['timestamp']):
-        production_chemist_id = get_employee_id(report['author'], employee_map) or 'NULL'
+        author_id = get_employee_id(report['author'], employee_map)
+
+        processors = []
+        if report.get('processors'):
+            processors = [get_employee_id(p, employee_map) for p in report['processors']]
+        elif author_id in bleaching_operator_ids:
+            processors = [author_id]
+
+        processors = [p for p in processors if p is not None and p in bleaching_operator_ids]
+
+        production_chemist_id = processors[0] if processors else 'NULL'
 
         def sql_safe(value):
             if value is None:
@@ -222,16 +245,10 @@ def generate_sql(reports, output_file):
         sql = f"INSERT INTO bleaching_process ({cols}) VALUES ({vals}) ON DUPLICATE KEY UPDATE {updates};\n"
         sql_statements.append(sql)
 
-        processors = report.get('processors', [])
-        if not processors:
-            processors = [report['author']]
-
-        for processor_name in processors:
-            emp_id = get_employee_id(processor_name, employee_map)
-            if emp_id:
-                kier_sql = (f"INSERT IGNORE INTO kier_processors (batch_number, employee_id) "
-                            f"VALUES ({sql_safe(report['batch_number'])}, {emp_id});\n")
-                sql_statements.append(kier_sql)
+        for emp_id in processors:
+            kier_sql = (f"INSERT IGNORE INTO kier_processors (batch_number, employee_id) "
+                        f"VALUES ({sql_safe(report['batch_number'])}, {emp_id});\n")
+            sql_statements.append(kier_sql)
 
     with open(output_file, 'w', encoding='utf-8') as f:
         f.writelines(sql_statements)
