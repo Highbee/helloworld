@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Bleaching Process Infographics</h2>
+    <hr>
+
+    <!-- Filters -->
+    <form method="get" class="form-inline mb-4">
+        <div class="form-group mr-2">
+            <label for="start_date" class="mr-2">Start Date:</label>
+            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|default:'' }}">
+        </div>
+        <div class="form-group mr-2">
+            <label for="end_date" class="mr-2">End Date:</label>
+            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|default:'' }}">
+        </div>
+        <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    Process Durations
+                </div>
+                <div class="card-body">
+                    <canvas id="durationsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Technical Challenge Frequency
+                </div>
+                <div class="card-body">
+                    <canvas id="challengesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chartData = JSON.parse('{{ chart_data|escapejs }}');
+    const challengeCounts = JSON.parse('{{ challenge_counts|escapejs }}');
+
+    // Prepare data for durations chart
+    const labels = chartData.map(d => `${d.date} (${d.batch_number})`);
+    const timeToKeepData = chartData.map(d => d.time_to_keep);
+    const processDurationData = chartData.map(d => d.process_duration);
+    const timeBetweenData = chartData.map(d => d.time_between);
+
+    // Durations Chart
+    const durationsCtx = document.getElementById('durationsChart').getContext('2d');
+    new Chart(durationsCtx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Time to Keep (mins)',
+                    data: timeToKeepData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: false,
+                },
+                {
+                    label: 'Process Duration (mins)',
+                    data: processDurationData,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: false,
+                },
+                {
+                    label: 'Time Between Processes (mins)',
+                    data: timeBetweenData,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    fill: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        afterBody: function(tooltipItems, data) {
+                            const index = tooltipItems[0].index;
+                            const process = chartData[index];
+                            let tooltipText = [];
+                            tooltipText.push(`Remarks: ${process.remarks}`);
+                            tooltipText.push(`Challenges: ${process.challenges_text}`);
+                            return tooltipText;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Batch'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Duration (minutes)'
+                    }
+                }
+            }
+        }
+    });
+
+    // Challenges Chart
+    const challengesCtx = document.getElementById('challengesChart').getContext('2d');
+    new Chart(challengesCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(challengeCounts),
+            datasets: [{
+                label: 'Frequency',
+                data: Object.values(challengeCounts),
+                backgroundColor: 'rgba(153, 102, 255, 0.6)',
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

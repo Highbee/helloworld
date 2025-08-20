@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect
-from django.db.models import Sum
+from django.db.models import Sum, F
 from django.http import JsonResponse
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 from .models import Employees, Products, Status, Productions, BleachingProcess, Transfers, TransferItems
 from .forms import EmployeeForm, ProductForm, StatusForm, ProductionsForm, BleachingProcessForm, TransfersForm, ProductionFormSet, TransferItemsFormSet, BatchReportForm, DateRangeReportForm
+import json
+from collections import Counter
+from datetime import datetime
 
 def employee_list(request):
     employees = Employees.objects.all()
@@ -293,3 +296,57 @@ def report_total_transfer_summary(request):
         'end_date': end_date,
     }
     return render(request, 'report_total_transfer_summary.html', context)
+
+def bleaching_infographic(request):
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    processes = BleachingProcess.objects.all()
+
+    if start_date_str and end_date_str:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        processes = processes.filter(date__range=[start_date, end_date])
+
+    processes = processes.order_by('process_start')
+
+    chart_data = []
+    technical_challenges = []
+    previous_process_end = None
+
+    for process in processes:
+        time_to_keep = (process.keeping_start - process.heating_start).total_seconds() / 60 if process.keeping_start and process.heating_start else None
+        process_duration = (process.process_end - process.process_start).total_seconds() / 60 if process.process_end and process.process_start else None
+        time_between = (process.process_start - previous_process_end).total_seconds() / 60 if previous_process_end and process.process_start else None
+        previous_process_end = process.process_end
+
+        if process.technical_challenges and process.technical_challenges.lower().strip() not in ['nil', 'n/a', '']:
+            # Simple keyword-based categorization
+            challenges_text = process.technical_challenges.lower()
+            if 'leakage' in challenges_text: technical_challenges.append('Leakage')
+            if 'compressor' in challenges_text: technical_challenges.append('Compressor Issue')
+            if 'pump' in challenges_text: technical_challenges.append('Pump Issue')
+            if 'power' in challenges_text or 'light' in challenges_text or 'generator' in challenges_text: technical_challenges.append('Power Issue')
+            if 'delay in keeping' in challenges_text: technical_challenges.append('Delay in Keeping Time')
+            if 'water level' in challenges_text: technical_challenges.append('Water Level Drop')
+
+        chart_data.append({
+            'batch_number': process.batch_number,
+            'date': process.date.strftime('%Y-%m-%d'),
+            'time_to_keep': time_to_keep,
+            'process_duration': process_duration,
+            'time_between': time_between,
+            'remarks': process.remarks,
+            'challenges_text': process.technical_challenges,
+        })
+
+    challenge_counts = Counter(technical_challenges)
+
+    context = {
+        'chart_data': json.dumps(chart_data),
+        'challenge_counts': json.dumps(challenge_counts),
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+    }
+
+    return render(request, 'bleaching_infographic.html', context)
