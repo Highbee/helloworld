@@ -29,6 +29,7 @@ class Employees(models.Model):
     first_name = models.CharField(max_length=45)
     last_name = models.CharField(max_length=45)
     gender = models.CharField(max_length=1)
+    whatsapp_number = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -52,14 +53,27 @@ class Products(models.Model):
 
 class BleachingProcess(models.Model):
     idbleaching_process = models.AutoField(primary_key=True)
-    production_chemist_employee = models.ForeignKey(Employees, on_delete=models.RESTRICT, related_name='bleaching_processes_as_chemist', db_column='production_chemist_employee_id')
+    production_chemist_employee = models.ForeignKey(Employees, on_delete=models.RESTRICT, related_name='bleaching_processes_as_chemist', db_column='production_chemist_employee_id', null=True, blank=True)
     batch_number = models.CharField(max_length=9, unique=True, blank=True, null=True)
-    date = models.DateField()
-    shift = models.CharField(max_length=9)
-    comments = models.CharField(max_length=255)
-    number_of_cakes_to_rebleached = models.IntegerField()
-    number_of_rebleach_added = models.IntegerField()
+    date = models.DateField(null=True, blank=True)
+    shift = models.CharField(max_length=9, null=True, blank=True)
+    comments = models.CharField(max_length=255, null=True, blank=True)
+    number_of_cakes_to_rebleached = models.IntegerField(null=True, blank=True)
+    number_of_rebleach_added = models.IntegerField(null=True, blank=True)
     processors = models.ManyToManyField(Employees, through='KierProcessors', related_name='bleaching_processes_as_processor')
+
+    # New fields for infographic
+    process_start = models.DateTimeField(null=True, blank=True)
+    heating_start = models.DateTimeField(null=True, blank=True)
+    keeping_start = models.DateTimeField(null=True, blank=True)
+    cooling_start = models.DateTimeField(null=True, blank=True)
+    process_end = models.DateTimeField(null=True, blank=True)
+    heating_duration_minutes = models.IntegerField(null=True, blank=True)
+    process_duration_minutes = models.IntegerField(null=True, blank=True)
+    number_of_cakes_dried = models.IntegerField(null=True, blank=True)
+    technical_challenges = models.TextField(null=True, blank=True)
+    maintenance_notes = models.TextField(null=True, blank=True)
+    remarks = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.batch_number
