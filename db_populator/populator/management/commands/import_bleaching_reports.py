@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand, CommandError
+from populator.models import BleachingProcess, Employees, KierProcessors
 
 # --- Helper functions ---
 
@@ -106,15 +107,10 @@ def parse_report_block(reports, author, timestamp, text):
     parts = re.split(key_regex, text, flags=re.IGNORECASE)
 
     data = {}
-    remaining_text = ''
     if len(parts) > 1:
-        remaining_text = parts[0]
         for i in range(1, len(parts), 2):
             key = parts[i].strip().upper()
-            value_block = parts[i+1]
-
-            value_lines = value_block.strip().split('\n')
-            value = ' '.join(v.replace(':', '').strip() for v in value_lines)
+            value = parts[i+1].replace(':', '').strip()
             data[key] = value
 
     report['batch_number'] = data.get('BATCH NUMBER')
@@ -166,108 +162,94 @@ def parse_report_block(reports, author, timestamp, text):
     if report['batch_number'] not in reports or reports[report['batch_number']]['timestamp'] < report['timestamp']:
         reports[report['batch_number']] = report
 
-def get_employee_id(name_or_phone, employee_map):
+def get_employee(name_or_phone, employee_map):
     if not name_or_phone: return None
 
     if name_or_phone.startswith('+'):
         phone_number = ''.join(filter(str.isdigit, name_or_phone))
         for num, emp_id in employee_map.items():
             if phone_number.endswith(num):
-                return emp_id
+                return Employees.objects.filter(pk=emp_id).first()
     else:
         name = name_or_phone.lower().replace('mr', '').replace('.', '').strip()
         for emp_name, emp_id in employee_map.items():
             if not emp_name.isdigit() and name == emp_name.lower():
-                return emp_id
+                return Employees.objects.filter(pk=emp_id).first()
         for emp_name, emp_id in employee_map.items():
             if not emp_name.isdigit() and all(part in emp_name.lower().split() for part in name.split()):
-                return emp_id
+                return Employees.objects.filter(pk=emp_id).first()
     return None
 
-def generate_sql(reports, output_file):
-    employee_map = {
-        'Emmanuel Olaoye': 1, 'olaoye e.a': 1, 'olaoye emmanuel': 1, '9060834296': 1,
-        'Niyi Olayemi': 2, 'olayemi oyeniyi': 2, 'olayemi o.s': 2, '7062716844': 2,
-        'Joel Afuye': 3, 'afuye olatunde joel': 3, 'afuye joel': 3, 'afuye olatunde': 3, '7066150893': 3,
-        'Azeez Kabir': 4, 'azeez k.l': 4, '8105931726': 4,
-        'jubfuns': 5,
-        'PrinceAjibola Abdulateef APM': 6,
-        'Mr Dare Production Supervisor': 7, 'Dare Oloniruha': 7,
-        'Mr Ibrahim Production Executive': 8, 'Ibrahim Opeyemi': 8,
-        'Highbee': 9
-    }
-    bleaching_operator_ids = {1, 2, 3, 4}
-
-    sql_statements = []
-
-    for batch_number, report in sorted(reports.items(), key=lambda item: item[1]['timestamp']):
-        author_id = get_employee_id(report['author'], employee_map)
-
-        processors = []
-        if report.get('processors'):
-            processors = [get_employee_id(p, employee_map) for p in report['processors']]
-        elif author_id in bleaching_operator_ids:
-            processors = [author_id]
-
-        processors = [p for p in processors if p is not None and p in bleaching_operator_ids]
-
-        production_chemist_id = processors[0] if processors else 'NULL'
-
-        def sql_safe(value):
-            if value is None:
-                return 'NULL'
-            if isinstance(value, (int, float)):
-                return str(value)
-            return f"'{str(value).replace("'", "''")}'"
-
-        values = {
-            'batch_number': sql_safe(report['batch_number']),
-            'date': sql_safe(report['date'].strftime('%Y-%m-%d')) if report.get('date') else 'NULL',
-            'shift': sql_safe(report.get('shift')),
-            'production_chemist_employee_id': str(production_chemist_id),
-            'process_start': sql_safe(report['process_start_dt'].strftime('%Y-%m-%d %H:%M:%S')) if report.get('process_start_dt') else 'NULL',
-            'heating_start': sql_safe(report['heating_start_dt'].strftime('%Y-%m-%d %H:%M:%S')) if report.get('heating_start_dt') else 'NULL',
-            'keeping_start': sql_safe(report['keeping_start_dt'].strftime('%Y-%m-%d %H:%M:%S')) if report.get('keeping_start_dt') else 'NULL',
-            'cooling_start': sql_safe(report['cooling_start_dt'].strftime('%Y-%m-%d %H:%M:%S')) if report.get('cooling_start_dt') else 'NULL',
-            'process_end': sql_safe(report['process_end_dt'].strftime('%Y-%m-%d %H:%M:%S')) if report.get('process_end_dt') else 'NULL',
-            'heating_duration_minutes': sql_safe(report.get('heating_duration_minutes')),
-            'process_duration_minutes': sql_safe(report.get('process_duration_minutes')),
-            'number_of_cakes_dried': sql_safe(report.get('number_of_cakes_dried')),
-            'technical_challenges': sql_safe(report.get('technical_challenges')),
-            'maintenance_notes': sql_safe(report.get('maintenance_notes')),
-            'remarks': sql_safe(report.get('remarks')),
-        }
-
-        cols = ', '.join(values.keys())
-        vals = ', '.join(values.values())
-        updates = ', '.join([f"{k}={v}" for k, v in values.items() if k != 'batch_number'])
-
-        sql = f"INSERT INTO bleaching_process ({cols}) VALUES ({vals}) ON DUPLICATE KEY UPDATE {updates};\n"
-        sql_statements.append(sql)
-
-        for emp_id in processors:
-            kier_sql = (f"INSERT IGNORE INTO kier_processors (batch_number, employee_id) "
-                        f"VALUES ({sql_safe(report['batch_number'])}, {emp_id});\n")
-            sql_statements.append(kier_sql)
-
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.writelines(sql_statements)
-
 class Command(BaseCommand):
-    help = 'Parses a WhatsApp chat log to generate an SQL file for populating bleaching process data.'
+    help = 'Parses a WhatsApp chat log to populate bleaching process data using the Django ORM.'
 
     def add_arguments(self, parser):
         parser.add_argument('chat_file', type=str, help='The path to the WhatsApp chat log file.')
-        parser.add_argument('output_sql_file', type=str, help='The path to the output SQL file.')
 
     def handle(self, *args, **options):
         chat_file_path = options['chat_file']
-        output_sql_path = options['output_sql_file']
+
+        employee_map = {
+            'Emmanuel Olaoye': 1, 'olaoye e.a': 1, 'olaoye emmanuel': 1, '9060834296': 1,
+            'Niyi Olayemi': 2, 'olayemi oyeniyi': 2, 'olayemi o.s': 2, '7062716844': 2,
+            'Joel Afuye': 3, 'afuye olatunde joel': 3, 'afuye joel': 3, 'afuye olatunde': 3, '7066150893': 3,
+            'Azeez Kabir': 4, 'azeez k.l': 4, '8105931726': 4,
+            'jubfuns': 5,
+            'PrinceAjibola Abdulateef APM': 6,
+            'Mr Dare Production Supervisor': 7, 'Dare Oloniruha': 7,
+            'Mr Ibrahim Production Executive': 8, 'Ibrahim Opeyemi': 8,
+            'Highbee': 9
+        }
+        bleaching_operator_ids = {1, 2, 3, 4}
 
         try:
             parsed_reports = parse_whatsapp_chat(chat_file_path)
-            generate_sql(parsed_reports, output_sql_path)
-            self.stdout.write(self.style.SUCCESS(f"Generated {output_sql_path} successfully with {len(parsed_reports)} reports."))
+
+            for batch_number, report_data in parsed_reports.items():
+                author_employee = get_employee(report_data['author'], employee_map)
+
+                processors = []
+                if report_data.get('processors'):
+                    processors = [get_employee(p, employee_map) for p in report_data['processors']]
+                elif author_employee and author_employee.pk in bleaching_operator_ids:
+                    processors = [author_employee]
+
+                processors = [p for p in processors if p is not None and p.pk in bleaching_operator_ids]
+
+                production_chemist = processors[0] if processors else None
+
+                defaults = {
+                    'date': report_data.get('date'),
+                    'shift': report_data.get('shift'),
+                    'production_chemist_employee': production_chemist,
+                    'process_start': report_data.get('process_start_dt'),
+                    'heating_start': report_data.get('heating_start_dt'),
+                    'keeping_start': report_data.get('keeping_start_dt'),
+                    'cooling_start': report_data.get('cooling_start_dt'),
+                    'process_end': report_data.get('process_end_dt'),
+                    'heating_duration_minutes': report_data.get('heating_duration_minutes'),
+                    'process_duration_minutes': report_data.get('process_duration_minutes'),
+                    'number_of_cakes_dried': report_data.get('number_of_cakes_dried'),
+                    'technical_challenges': report_data.get('technical_challenges'),
+                    'maintenance_notes': report_data.get('maintenance_notes'),
+                    'remarks': report_data.get('remarks'),
+                }
+
+                process, created = BleachingProcess.objects.update_or_create(
+                    batch_number=batch_number,
+                    defaults=defaults
+                )
+
+                if processors:
+                    process.processors.set(processors)
+
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f'Created new process for batch {batch_number}'))
+                else:
+                    self.stdout.write(self.style.SUCCESS(f'Updated process for batch {batch_number}'))
+
+            self.stdout.write(self.style.SUCCESS(f"Successfully processed {len(parsed_reports)} reports."))
+
         except FileNotFoundError:
             raise CommandError(f'File not found at "{chat_file_path}"')
         except Exception as e:

@@ -75,7 +75,7 @@ WSGI_APPLICATION = "db_populator.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "mysql.connector.django",
+        "ENGINE": "django.db.backends.mysql",
         "NAME": "ayodele",
         "USER": "root",
         "PASSWORD": "",
