@@ -4,6 +4,12 @@
 
 -- Modify columns in the bleaching_process table to allow NULL values
 ALTER TABLE bleaching_process
+MODIFY COLUMN production_chemist_employee_id INT NULL,
+MODIFY COLUMN date DATE NULL,
+MODIFY COLUMN shift VARCHAR(9) NULL,
+MODIFY COLUMN comments VARCHAR(255) NULL,
+MODIFY COLUMN number_of_cakes_to_rebleached INT NULL,
+MODIFY COLUMN number_of_rebleach_added INT NULL,
 MODIFY COLUMN process_start DATETIME NULL,
 MODIFY COLUMN heating_start DATETIME NULL,
 MODIFY COLUMN keeping_start DATETIME NULL,
