@@ -1,18 +1,23 @@
--- Add new columns to the bleaching_process table for detailed reporting
+-- This script updates the database schema.
+-- It modifies existing columns to allow NULL values and adds a new column to the employees table.
+-- It is safe to re-run this script.
+
+-- Modify columns in the bleaching_process table to allow NULL values
 ALTER TABLE bleaching_process
-ADD COLUMN process_start DATETIME,
-ADD COLUMN heating_start DATETIME,
-ADD COLUMN keeping_start DATETIME,
-ADD COLUMN cooling_start DATETIME,
-ADD COLUMN process_end DATETIME,
-ADD COLUMN heating_duration_minutes INT,
-ADD COLUMN process_duration_minutes INT,
-ADD COLUMN number_of_cakes_dried INT,
-ADD COLUMN technical_challenges TEXT,
-ADD COLUMN maintenance_notes TEXT,
-ADD COLUMN remarks TEXT;
+MODIFY COLUMN process_start DATETIME NULL,
+MODIFY COLUMN heating_start DATETIME NULL,
+MODIFY COLUMN keeping_start DATETIME NULL,
+MODIFY COLUMN cooling_start DATETIME NULL,
+MODIFY COLUMN process_end DATETIME NULL,
+MODIFY COLUMN heating_duration_minutes INT NULL,
+MODIFY COLUMN process_duration_minutes INT NULL,
+MODIFY COLUMN number_of_cakes_dried INT NULL,
+MODIFY COLUMN technical_challenges TEXT NULL,
+MODIFY COLUMN maintenance_notes TEXT NULL,
+MODIFY COLUMN remarks TEXT NULL;
 
 -- Add whatsapp_number column to employees table for better identification
+-- The following command might fail if the column already exists, which is safe to ignore.
 ALTER TABLE employees ADD COLUMN whatsapp_number VARCHAR(20) NULL;
 
 -- Update existing employees with their WhatsApp numbers

@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand, CommandError
-from populator.models import BleachingProcess, Employees, KierProcessors
+from populator.models import BleachingProcess, Employees
 
 # --- Helper functions ---
 
@@ -205,7 +205,12 @@ class Command(BaseCommand):
         try:
             parsed_reports = parse_whatsapp_chat(chat_file_path)
 
+            processed_count = 0
             for batch_number, report_data in parsed_reports.items():
+                if not batch_number:
+                    self.stdout.write(self.style.WARNING(f"Skipping report at {report_data['timestamp']} due to missing batch number."))
+                    continue
+
                 author_employee = get_employee(report_data['author'], employee_map)
 
                 processors = []
@@ -216,7 +221,11 @@ class Command(BaseCommand):
 
                 processors = [p for p in processors if p is not None and p.pk in bleaching_operator_ids]
 
-                production_chemist = processors[0] if processors else None
+                if not processors:
+                    self.stdout.write(self.style.WARNING(f"Skipping batch {batch_number} due to no valid operators found."))
+                    continue
+
+                production_chemist = processors[0]
 
                 defaults = {
                     'date': report_data.get('date'),
@@ -240,15 +249,16 @@ class Command(BaseCommand):
                     defaults=defaults
                 )
 
-                if processors:
-                    process.processors.set(processors)
+                process.processors.set(processors)
 
                 if created:
                     self.stdout.write(self.style.SUCCESS(f'Created new process for batch {batch_number}'))
                 else:
                     self.stdout.write(self.style.SUCCESS(f'Updated process for batch {batch_number}'))
 
-            self.stdout.write(self.style.SUCCESS(f"Successfully processed {len(parsed_reports)} reports."))
+                processed_count += 1
+
+            self.stdout.write(self.style.SUCCESS(f"Successfully processed {processed_count} of {len(parsed_reports)} reports."))
 
         except FileNotFoundError:
             raise CommandError(f'File not found at "{chat_file_path}"')
